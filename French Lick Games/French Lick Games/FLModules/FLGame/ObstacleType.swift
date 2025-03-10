@@ -1,223 +1,266 @@
+import SpriteKit
 import SwiftUI
 
-// MARK: - Obstacle Model and Types
+// MARK: - Obstacle Type
 
-enum ObstacleType: String {
+enum ObstacleType {
     case stone, tree, rivalHorse
 }
 
-struct Obstacle: Identifiable {
-    let id = UUID()
-    var lane: Int       // 0 (top), 1 (middle), 2 (bottom)
-    var x: CGFloat      // Horizontal position
-    var type: ObstacleType
+func colorForObstacle(_ type: ObstacleType) -> UIColor {
+    switch type {
+    case .stone: return .gray
+    case .tree: return .green
+    case .rivalHorse: return .black
+    }
 }
 
-// MARK: - Runner Game View
+// MARK: - RunnerGameScene
 
-struct RunnerGameView: View {
-    // MARK: - Game State
-    @State private var horseLane: Int = 1    // Start in middle lane (0,1,2)
-    @State private var isJumping: Bool = false
-    @State private var jumpOffset: CGFloat = 0
-    @State private var obstacles: [Obstacle] = []
-    @State private var acceleration: Bool = false
-    @State private var gameOver: Bool = false
+class RunnerGameScene: SKScene {
     
-    @State private var lastUpdateTime: Date = Date()
-    @State private var timer: Timer? = nil
-    @State private var gameSpeed: CGFloat = 200  // Base speed (points per second)
+    // MARK: - Game Nodes and State
+    var horse: SKSpriteNode!
+    var lanePositions: [CGFloat] = []
+    var currentLane: Int = 1 // 0, 1, 2 (middle lane)
+    var isJumping = false
+    var acceleration = false
+    var gameOver = false
     
-    // MARK: - Layout Constants
-    let laneHeight: CGFloat = 120
-    let horseSize: CGSize = CGSize(width: 60, height: 60)
-    let horseX: CGFloat = 100  // Fixed horizontal position for the horse
+    var obstacles: [SKSpriteNode] = []
     
-    var body: some View {
-        ZStack {
-            // Background
-            Color.green.ignoresSafeArea()
-            
-            // Draw lane dividers for visual reference
-            ForEach(0..<3, id: \.self) { lane in
-                Path { path in
-                    let y = CGFloat(lane) * laneHeight + laneHeight / 2
-                    path.move(to: CGPoint(x: 0, y: y))
-                    path.addLine(to: CGPoint(x: UIScreen.main.bounds.width, y: y))
-                }
-                .stroke(Color.white.opacity(0.5), lineWidth: 2)
-            }
-            
-            // Obstacles (they appear as rectangles; color depends on type)
-            ForEach(obstacles) { obstacle in
-                let y = CGFloat(obstacle.lane) * laneHeight + laneHeight / 2
-                Rectangle()
-                    .fill(colorFor(obstacle.type))
-                    .frame(width: 40, height: 40)
-                    .position(x: obstacle.x, y: y)
-            }
-            
-            // Horse image (you can replace with your own asset)
-            // The horse’s vertical position is determined by its current lane plus any jump offset.
-            let horseY = CGFloat(horseLane) * laneHeight + laneHeight / 2 + jumpOffset
-            Image(systemName: "hare.fill")
-                .resizable()
-                .foregroundColor(.brown)
-                .frame(width: horseSize.width, height: horseSize.height)
-                .position(x: horseX, y: horseY)
-                .animation(.easeInOut, value: horseLane)
-            
-            // Game Over overlay
-            if gameOver {
-                Text("Game Over")
-                    .font(.largeTitle)
-                    .foregroundColor(.red)
-                    .padding()
-                    .background(Color.white)
-            }
-            
-            // Acceleration button (toggling game speed)
-            VStack {
-                Spacer()
-                HStack {
-                    Spacer()
-                    Button(action: {
-                        acceleration.toggle()
-                    }) {
-                        Text(acceleration ? "Normal" : "Accelerate")
-                            .padding()
-                            .background(Color.orange)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
-                    }
-                    .padding()
-                }
-            }
+    // Speed properties (points per second)
+    var baseSpeed: CGFloat = 200.0
+    var lastUpdateTime: TimeInterval = 0
+    
+    // For swipe detection
+    var initialTouchY: CGFloat?
+    
+    // Lane spacing – we define lanes based on scene height
+    var laneCount: Int { return 3 }
+    
+    // Fixed horizontal position for the horse
+    let horseX: CGFloat = 100
+    
+    // Acceleration button node
+    var accelButton: SKLabelNode!
+    
+    // New background nodes
+    var bg1: SKSpriteNode!
+    var bg2: SKSpriteNode!
+    
+    // MARK: - Scene Setup
+    override func didMove(to view: SKView) {
+        backgroundColor = .skyBlue
+        
+        // Set up moving background image:
+        let bgTexture = SKTexture(imageNamed: "fieldFL")
+        bg1 = SKSpriteNode(texture: bgTexture)
+        bg1.anchorPoint = .zero
+        bg1.position = .zero
+        bg1.zPosition = -1  // behind other nodes
+        bg1.size = self.size
+        addChild(bg1)
+        
+        bg2 = SKSpriteNode(texture: bgTexture)
+        bg2.anchorPoint = .zero
+        // Place bg2 right next to bg1 (minus 1 point to avoid a gap)
+        bg2.position = CGPoint(x: bg1.size.width - 1, y: 0)
+        bg2.zPosition = -1
+        bg2.size = self.size
+        addChild(bg2)
+        
+        // Define lane positions (evenly spaced vertically)
+        let laneHeight = size.height / CGFloat(laneCount)
+        lanePositions = (0..<laneCount).map { CGFloat($0) * laneHeight + laneHeight / 2 }
+        
+        // Create the horse sprite
+        horse = SKSpriteNode(color: .brown, size: CGSize(width: 60, height: 60))
+        horse.position = CGPoint(x: horseX, y: lanePositions[currentLane])
+        addChild(horse)
+        
+        // Create an acceleration button in the upper-right corner
+        accelButton = SKLabelNode(text: "Accelerate")
+        accelButton.name = "accelButton"
+        accelButton.fontSize = 24
+        accelButton.fontColor = .orange
+        accelButton.position = CGPoint(x: size.width - 100, y: size.height - 50)
+        addChild(accelButton)
+        
+        // Optionally, draw lane dividers
+        for lane in 0..<laneCount {
+            let y = lanePositions[lane]
+            let path = CGMutablePath()
+            path.move(to: CGPoint(x: 0, y: y))
+            path.addLine(to: CGPoint(x: size.width, y: y))
+            let line = SKShapeNode(path: path)
+            line.strokeColor = UIColor.white.withAlphaComponent(0.5)
+            line.lineWidth = 2
+            addChild(line)
         }
-        // Tap gesture for jumping
-        .gesture(
-            TapGesture()
-                .onEnded {
-                    if !isJumping {
-                        startJump()
-                    }
-                }
-        )
-        // Drag gesture for lane switching (swipe up/down)
-        .gesture(
-            DragGesture(minimumDistance: 20)
-                .onEnded { value in
-                    if value.translation.height < 0 {
-                        // Swipe up: move to an upper lane if possible
-                        if horseLane > 0 {
-                            withAnimation {
-                                horseLane -= 1
-                            }
-                        }
-                    } else if value.translation.height > 0 {
-                        // Swipe down: move to a lower lane if possible
-                        if horseLane < 2 {
-                            withAnimation {
-                                horseLane += 1
-                            }
-                        }
-                    }
-                }
-        )
-        .onAppear {
-            startGameLoop()
-        }
-        .onDisappear {
-            timer?.invalidate()
-        }
+        
+        lastUpdateTime = 0
+        
+        // Start by spawning an obstacle
+        spawnObstacle()
     }
     
-    // MARK: - Helper Functions
-    
-    /// Starts the jump animation: moves up and then returns.
-    func startJump() {
-        isJumping = true
-        withAnimation(.easeOut(duration: 0.3)) {
-            jumpOffset = -50
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            withAnimation(.easeIn(duration: 0.3)) {
-                jumpOffset = 0
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                isJumping = false
-            }
-        }
-    }
-    
-    /// Starts the game loop using a Timer.
-    func startGameLoop() {
-        lastUpdateTime = Date()
-        timer = Timer.scheduledTimer(withTimeInterval: 1/60, repeats: true) { _ in
-            gameLoop()
-        }
-    }
-    
-    /// Main game loop: updates obstacles and checks for collisions.
-    func gameLoop() {
-        let currentTime = Date()
-        let deltaTime = CGFloat(currentTime.timeIntervalSince(lastUpdateTime))
+    // MARK: - Game Loop
+    override func update(_ currentTime: TimeInterval) {
+        if gameOver { return }
+        
+        // Calculate delta time
+        let dt = (lastUpdateTime == 0) ? 0 : currentTime - lastUpdateTime
         lastUpdateTime = currentTime
         
-        // Determine current speed (accelerated if toggled)
-        let speed = acceleration ? gameSpeed * 1.5 : gameSpeed
+        // Update moving background
+        let backgroundSpeed = baseSpeed * 0.3  // adjust multiplier for parallax effect
+        bg1.position.x -= backgroundSpeed * CGFloat(dt)
+        bg2.position.x -= backgroundSpeed * CGFloat(dt)
         
-        // Update obstacles: move each one leftwards based on the elapsed time.
-        for i in obstacles.indices {
-            obstacles[i].x -= speed * deltaTime
+        // When a background node moves completely off-screen, reposition it to the right
+        if bg1.position.x <= -bg1.size.width {
+            bg1.position.x = bg2.position.x + bg2.size.width - 1
         }
-        // Remove obstacles that have moved off screen.
-        obstacles.removeAll { $0.x < -50 }
+        if bg2.position.x <= -bg2.size.width {
+            bg2.position.x = bg1.position.x + bg1.size.width - 1
+        }
         
-        // Check for collisions: if an obstacle is in the same lane and close to the horse.
+        // Determine current speed (boost if acceleration is toggled)
+        let speed = acceleration ? baseSpeed * 1.5 : baseSpeed
+        
+        // Move obstacles left
         for obstacle in obstacles {
-            if obstacle.lane == horseLane && abs(obstacle.x - horseX) < 40 {
-                // If the horse is not sufficiently high (jumped), consider it a collision.
-                if abs(jumpOffset) < 20 {
+            obstacle.position.x -= speed * CGFloat(dt)
+        }
+        
+        // Remove obstacles that are off-screen
+        obstacles = obstacles.filter { obstacle in
+            if obstacle.position.x < -50 {
+                obstacle.removeFromParent()
+                return false
+            }
+            return true
+        }
+        
+        // Spawn a new obstacle when needed
+        if obstacles.isEmpty || (obstacles.last!.position.x < size.width - 200) {
+            spawnObstacle()
+        }
+        
+        // Check collisions: if an obstacle is in the same lane and close enough (and the horse is not jumping), game over.
+        for obstacle in obstacles {
+            if abs(obstacle.position.x - horse.position.x) < 40 &&
+               abs(obstacle.position.y - horse.position.y) < 40 {
+                if !isJumping {
                     gameOver = true
-                    timer?.invalidate()
+                    showGameOver()
                     return
                 }
             }
         }
-        
-        // Spawn new obstacles if needed.
-        if obstacles.isEmpty || (obstacles.last?.x ?? UIScreen.main.bounds.width) < UIScreen.main.bounds.width - 200 {
-            spawnObstacle()
+    }
+    
+    // MARK: - Spawning Obstacles
+    func spawnObstacle() {
+        // Randomly choose an obstacle type
+        let types: [ObstacleType] = [.stone, .tree, .rivalHorse]
+        let type = types.randomElement()!
+        let obstacle = SKSpriteNode(color: colorForObstacle(type), size: CGSize(width: 40, height: 40))
+        let lane = Int.random(in: 0..<laneCount)
+        obstacle.position = CGPoint(x: size.width + 50, y: lanePositions[lane])
+        obstacle.name = "obstacle"
+        addChild(obstacle)
+        obstacles.append(obstacle)
+    }
+    
+    // MARK: - Touch Handling (for Jump and Lane Switch)
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        // Record the initial touch Y for swipe detection.
+        if let touch = touches.first {
+            initialTouchY = touch.location(in: self).y
         }
     }
     
-    /// Spawns a new obstacle at the right edge in a random lane.
-    func spawnObstacle() {
-        let lane = Int.random(in: 0...2)
-        let types: [ObstacleType] = [.stone, .tree, .rivalHorse]
-        let type = types.randomElement()!
-        let newObstacle = Obstacle(lane: lane, x: UIScreen.main.bounds.width + 50, type: type)
-        obstacles.append(newObstacle)
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let touch = touches.first, let startY = initialTouchY else { return }
+        let endY = touch.location(in: self).y
+        let deltaY = endY - startY
+        
+        let location = touch.location(in: self)
+        let nodesAtPoint = nodes(at: location)
+        if nodesAtPoint.contains(where: { $0.name == "accelButton" }) {
+            // Toggle acceleration if the button is tapped.
+            acceleration.toggle()
+            accelButton.text = acceleration ? "Normal" : "Accelerate"
+            return
+        }
+        
+        // If the vertical movement is significant, treat it as a swipe for lane switching.
+        if abs(deltaY) > 20 {
+            if deltaY > 0 && currentLane > 0 {
+                // Swipe up: move to a higher lane
+                currentLane -= 1
+                let moveAction = SKAction.moveTo(y: lanePositions[currentLane], duration: 0.2)
+                horse.run(moveAction)
+            } else if deltaY < 0 && currentLane < laneCount - 1 {
+                // Swipe down: move to a lower lane
+                currentLane += 1
+                let moveAction = SKAction.moveTo(y: lanePositions[currentLane], duration: 0.2)
+                horse.run(moveAction)
+            }
+        } else {
+            // Otherwise, treat as a tap for jump.
+            if !isJumping {
+                startJump()
+            }
+        }
+        initialTouchY = nil
     }
     
-    /// Returns a color for an obstacle based on its type.
-    func colorFor(_ type: ObstacleType) -> Color {
-        switch type {
-        case .stone:
-            return .gray
-        case .tree:
-            return .green
-        case .rivalHorse:
-            return .black
+    // MARK: - Jump Action
+    func startJump() {
+        isJumping = true
+        let jumpHeight: CGFloat = 80
+        let jumpUp = SKAction.moveBy(x: 0, y: jumpHeight, duration: 0.3)
+        jumpUp.timingMode = .easeOut
+        let jumpDown = SKAction.moveBy(x: 0, y: -jumpHeight, duration: 0.3)
+        jumpDown.timingMode = .easeIn
+        let sequence = SKAction.sequence([jumpUp, jumpDown])
+        horse.run(sequence) { [weak self] in
+            self?.isJumping = false
+        }
+    }
+    
+    // MARK: - Game Over
+    func showGameOver() {
+        let gameOverLabel = SKLabelNode(text: "Game Over")
+        gameOverLabel.fontSize = 48
+        gameOverLabel.fontColor = .red
+        gameOverLabel.position = CGPoint(x: size.width/2, y: size.height/2)
+        addChild(gameOverLabel)
+        
+        // Optionally stop all actions or present a restart button.
+    }
+}
+
+struct RunnerGameContainerView: View {
+    var scene: SKScene {
+        let scene = RunnerGameScene(size: UIScreen.main.bounds.size)
+        scene.scaleMode = .resizeFill
+        return scene
+    }
+    
+    var body: some View {
+        ZStack {
+            SpriteView(scene: scene)
+                .ignoresSafeArea()
         }
     }
 }
 
-// MARK: - Preview
-
-struct RunnerGameView_Previews: PreviewProvider {
+struct RunnerGameContainerView_Previews: PreviewProvider {
     static var previews: some View {
-        RunnerGameView()
+        RunnerGameContainerView()
     }
 }
