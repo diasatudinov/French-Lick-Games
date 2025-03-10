@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct FCLoaderView: View {
+struct FLLoaderView: View {
     @State private var progress: Double = 0.0
     @State private var timer: Timer?
     
@@ -10,39 +10,22 @@ struct FCLoaderView: View {
                 
                 VStack {
                     Spacer()
-                    ZStack {
-                        VStack(spacing: 50) {
-//                            Image(.chickenFC)
-//                                .resizable()
-//                                .scaledToFit()
-//                                .frame(height: 150)
-                        VStack(spacing: 16) {
-                            
-//                            Image(.loadingTextFC)
-//                                .resizable()
-//                                .scaledToFit()
-//                                .frame(height: 25)
-                            
-                            HStack {
-                                Spacer()
-                                Text("loading")
-                                    .font(.custom(FLFonts.regular.rawValue, size: 40))
-                                    .foregroundStyle(.milk)
-                                    .textCase(.uppercase)
-                                Spacer()
-                            }
-                        }
-                    }
+                    HStack {
+                        Spacer()
+                        TextWithBorder(text: "loading...", font: .custom(FLFonts.regular.rawValue, size: 40), textColor: .milk, borderColor: .black, borderWidth: 1)
+                            .textCase(.uppercase)
+                        Spacer()
                     }
                     .foregroundColor(.black)
                     .padding(.bottom, 25)
                 }
+                
             }.background(
                 Image(.bgFL)
                     .resizable()
                     .ignoresSafeArea()
                     .scaledToFill()
-                    
+                
                 
             )
             .onAppear {
@@ -66,5 +49,5 @@ struct FCLoaderView: View {
 
 
 #Preview {
-    FCLoaderView()
+    FLLoaderView()
 }
