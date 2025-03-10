@@ -1,5 +1,5 @@
 import Foundation
 
-enum Fonts: String {
-    case bold = "AbhayaLibre-Bold"
+enum FLFonts: String {
+    case regular = "CherryBombOne-Regular"
 }

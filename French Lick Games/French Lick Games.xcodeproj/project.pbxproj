@@ -10,22 +10,9 @@
 		2B07F4D32D7F176D005743FB /* French Lick Games.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "French Lick Games.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		2B07F4E52D7F1832005743FB /* Exceptions for "French Lick Games" folder in "French Lick Games" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"French-Lick-Games-Info.plist",
-			);
-			target = 2B07F4D22D7F176D005743FB /* French Lick Games */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		2B07F4D52D7F176D005743FB /* French Lick Games */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				2B07F4E52D7F1832005743FB /* Exceptions for "French Lick Games" folder in "French Lick Games" target */,
-			);
 			path = "French Lick Games";
 			sourceTree = "<group>";
 		};
