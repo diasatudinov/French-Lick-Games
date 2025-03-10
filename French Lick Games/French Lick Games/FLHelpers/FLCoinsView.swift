@@ -1,21 +1,13 @@
-//
-//  FCCoinsView.swift
-//  French Lick Games
-//
-//  Created by Dias Atudinov on 10.03.2025.
-//
-
-
 import SwiftUI
 
-struct FCCoinsView: View {
-    @StateObject var user = FCUserCoins.shared
+struct FLCoinsView: View {
+    @StateObject var user = FLUser.shared
     var body: some View {
         ZStack {
-            Image(.eggsBgFC)
+            Image(.coinsBgFL)
                 .resizable()
                 .scaledToFit()
-                .frame(height: 50)
+                .frame(height: 40)
             
             Text("\(user.coins)")
                 .font(.system(size: 20, weight: .black))
@@ -27,5 +19,5 @@ struct FCCoinsView: View {
 }
 
 #Preview {
-    FCCoinsView()
+    FLCoinsView()
 }

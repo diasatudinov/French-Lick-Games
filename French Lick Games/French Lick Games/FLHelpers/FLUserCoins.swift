@@ -1,41 +1,16 @@
-//
-//  FCUserCoins.swift
-//  French Lick Games
-//
-//  Created by Dias Atudinov on 10.03.2025.
-//
-
-
 import SwiftUI
 
-class FCUserCoins: ObservableObject {
-    static let shared = FCUserCoins()
+class FLUser: ObservableObject {
+    static let shared = FLUser()
     
-    @AppStorage("coins") var storedCoins: Int = 15
-    @Published var coins: Int = 15
-    
-    @AppStorage("score") var storedScore: Int = 0
-    @Published var score: Int = 0
-    
-    @AppStorage("maxScore") var storedMaxScore: Int = 0
-    @Published var maxScore: Int = 0
+    @AppStorage("coins") var storedCoins: Int = 10
+    @Published var coins: Int = 10
     
     init() {
         coins = storedCoins
-        score = storedScore
-        maxScore = storedMaxScore
+
     }
     
-    func updateMaxScore(for score: Int) {
-        self.maxScore = 0
-        self.maxScore += score
-        storedMaxScore = self.maxScore
-    }
-    
-    func updateScore(for score: Int) {
-        self.score += score
-        storedScore = self.score
-    }
     
     func updateUserCoins(for coins: Int) {
         self.coins += coins
