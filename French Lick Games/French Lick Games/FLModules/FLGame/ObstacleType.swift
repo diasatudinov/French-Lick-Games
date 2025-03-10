@@ -71,13 +71,29 @@ class RunnerGameScene: SKScene {
         addChild(bg2)
         
         // Define lane positions (evenly spaced vertically)
-        let laneHeight = size.height / CGFloat(laneCount)
+        let laneHeight = (size.height  / CGFloat(laneCount)) - 15
         lanePositions = (0..<laneCount).map { CGFloat($0) * laneHeight + laneHeight / 2 }
         
         // Create the horse sprite
-        horse = SKSpriteNode(color: .brown, size: CGSize(width: 60, height: 60))
+        horse = SKSpriteNode(texture: SKTexture(imageNamed: "horse1"))
+        horse.size = CGSize(width: 130, height: 85)
         horse.position = CGPoint(x: horseX, y: lanePositions[currentLane])
         addChild(horse)
+        
+        var runningTextures: [SKTexture] = []
+        
+        for i in 2...13 {
+            let textureName = "horse\(i)"  // Make sure your images are named "horse1", "horse2", etc.
+            let texture = SKTexture(imageNamed: textureName)
+            runningTextures.append(texture)
+        
+        }
+        // Create an animation action that cycles through the textures:
+        let runningAnimation = SKAction.animate(with: runningTextures, timePerFrame: 0.07)
+        // Repeat the animation forever:
+        let runningLoop = SKAction.repeatForever(runningAnimation)
+        // Run the animation on the horse node:
+        horse.run(runningLoop)
         
         // Create an acceleration button in the upper-right corner
         accelButton = SKLabelNode(text: "Accelerate")
@@ -86,18 +102,6 @@ class RunnerGameScene: SKScene {
         accelButton.fontColor = .orange
         accelButton.position = CGPoint(x: size.width - 100, y: size.height - 50)
         addChild(accelButton)
-        
-        // Optionally, draw lane dividers
-        for lane in 0..<laneCount {
-            let y = lanePositions[lane]
-            let path = CGMutablePath()
-            path.move(to: CGPoint(x: 0, y: y))
-            path.addLine(to: CGPoint(x: size.width, y: y))
-            let line = SKShapeNode(path: path)
-            line.strokeColor = UIColor.white.withAlphaComponent(0.5)
-            line.lineWidth = 2
-            addChild(line)
-        }
         
         lastUpdateTime = 0
         
@@ -154,6 +158,7 @@ class RunnerGameScene: SKScene {
                abs(obstacle.position.y - horse.position.y) < 40 {
                 if !isJumping {
                     gameOver = true
+                    
                     showGameOver()
                     return
                 }
@@ -166,10 +171,31 @@ class RunnerGameScene: SKScene {
         // Randomly choose an obstacle type
         let types: [ObstacleType] = [.stone, .tree, .rivalHorse]
         let type = types.randomElement()!
-        let obstacle = SKSpriteNode(color: colorForObstacle(type), size: CGSize(width: 40, height: 40))
+        
+        // Select texture name and assign a custom size based on obstacle type.
+        let textureName: String
+        let obstacleSize: CGSize
+        switch type {
+        case .stone:
+            textureName = "obstacle_stone"
+            obstacleSize = CGSize(width: 70, height: 53)   // Stone size
+        case .tree:
+            textureName = "obstacle_wood"
+            obstacleSize = CGSize(width: 44, height: 53)   // Tree size
+        case .rivalHorse:
+            textureName = "obstacle_puddle"
+            obstacleSize = CGSize(width: 117, height: 53)   // Rival horse size
+        }
+        
+        let texture = SKTexture(imageNamed: textureName)
+        let obstacle = SKSpriteNode(texture: texture)
+        obstacle.size = obstacleSize
+        
+        // Place obstacle off-screen to the right, in a random lane
         let lane = Int.random(in: 0..<laneCount)
         obstacle.position = CGPoint(x: size.width + 50, y: lanePositions[lane])
         obstacle.name = "obstacle"
+        
         addChild(obstacle)
         obstacles.append(obstacle)
     }
@@ -183,6 +209,7 @@ class RunnerGameScene: SKScene {
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        
         guard let touch = touches.first, let startY = initialTouchY else { return }
         let endY = touch.location(in: self).y
         let deltaY = endY - startY
@@ -196,22 +223,25 @@ class RunnerGameScene: SKScene {
             return
         }
         
-        // If the vertical movement is significant, treat it as a swipe for lane switching.
         if abs(deltaY) > 20 {
-            if deltaY > 0 && currentLane > 0 {
-                // Swipe up: move to a higher lane
-                currentLane -= 1
-                let moveAction = SKAction.moveTo(y: lanePositions[currentLane], duration: 0.2)
-                horse.run(moveAction)
-            } else if deltaY < 0 && currentLane < laneCount - 1 {
-                // Swipe down: move to a lower lane
-                currentLane += 1
-                let moveAction = SKAction.moveTo(y: lanePositions[currentLane], duration: 0.2)
-                horse.run(moveAction)
+            if deltaY > 0 {
+                // Swipe up: move to an upper lane (increase lane index)
+                if currentLane < laneCount - 1 {
+                    currentLane += 1
+                    let moveAction = SKAction.moveTo(y: lanePositions[currentLane], duration: 0.2)
+                    horse.run(moveAction)
+                }
+            } else if deltaY < 0 {
+                // Swipe down: move to a lower lane (decrease lane index)
+                if currentLane > 0 {
+                    currentLane -= 1
+                    let moveAction = SKAction.moveTo(y: lanePositions[currentLane], duration: 0.2)
+                    horse.run(moveAction)
+                }
             }
         } else {
-            // Otherwise, treat as a tap for jump.
-            if !isJumping {
+            // If the swipe distance is small, treat it as a tap for jump.
+            if !isJumping, !gameOver {
                 startJump()
             }
         }
@@ -221,10 +251,10 @@ class RunnerGameScene: SKScene {
     // MARK: - Jump Action
     func startJump() {
         isJumping = true
-        let jumpHeight: CGFloat = 80
-        let jumpUp = SKAction.moveBy(x: 0, y: jumpHeight, duration: 0.3)
+        let jumpHeight: CGFloat = 70
+        let jumpUp = SKAction.moveBy(x: 20, y: jumpHeight, duration: 0.3)
         jumpUp.timingMode = .easeOut
-        let jumpDown = SKAction.moveBy(x: 0, y: -jumpHeight, duration: 0.3)
+        let jumpDown = SKAction.moveBy(x: 20, y: -jumpHeight, duration: 0.3)
         jumpDown.timingMode = .easeIn
         let sequence = SKAction.sequence([jumpUp, jumpDown])
         horse.run(sequence) { [weak self] in
