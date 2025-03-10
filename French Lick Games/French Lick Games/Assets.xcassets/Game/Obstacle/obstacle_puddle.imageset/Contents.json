@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "obstacle_puddle.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
