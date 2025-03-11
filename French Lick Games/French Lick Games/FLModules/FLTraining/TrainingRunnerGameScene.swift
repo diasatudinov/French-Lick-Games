@@ -15,9 +15,9 @@ func colorForObstacle(_ type: ObstacleType) -> UIColor {
     }
 }
 
-// MARK: - RunnerGameScene
+// MARK: - TrainingRunnerGameScene
 
-class RunnerGameScene: SKScene {
+class TrainingRunnerGameScene: SKScene {
     
     // MARK: - Game Nodes and State
     var horse: SKSpriteNode!
@@ -271,26 +271,5 @@ class RunnerGameScene: SKScene {
         addChild(gameOverLabel)
         
         // Optionally stop all actions or present a restart button.
-    }
-}
-
-struct RunnerGameContainerView: View {
-    var scene: SKScene {
-        let scene = RunnerGameScene(size: UIScreen.main.bounds.size)
-        scene.scaleMode = .resizeFill
-        return scene
-    }
-    
-    var body: some View {
-        ZStack {
-            SpriteView(scene: scene)
-                .ignoresSafeArea()
-        }
-    }
-}
-
-struct RunnerGameContainerView_Previews: PreviewProvider {
-    static var previews: some View {
-        RunnerGameContainerView()
     }
 }
