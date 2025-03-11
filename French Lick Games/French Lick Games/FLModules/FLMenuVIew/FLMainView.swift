@@ -87,8 +87,7 @@ struct FLMainMenuView: View {
 //                FCTrapSweeperGameView(shopVM: shopVM)
             }
             .fullScreenCover(isPresented: $showTraining) {
-                Text("$$showTraining")
-//                FCRulesView()
+                RunnerGameContainerView()
             }
             .fullScreenCover(isPresented: $showUpgrade) {
                 Text("$$showUpgrade")
