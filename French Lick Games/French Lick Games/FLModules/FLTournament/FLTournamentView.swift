@@ -103,38 +103,6 @@ struct FLTournamentView: View {
                 }
             }
             
-            if gameData.gameWon && gameData.gameOver {
-                ZStack {
-                    Color.black.opacity(0.5).ignoresSafeArea()
-                    GameStopBoardView(gameStopState: .win, firstBtnTapped: {
-                        gameData.restartGame = true
-                        countdown = 3
-                        startCountdown()
-                    }, secondBtnTapped: {presentationMode.wrappedValue.dismiss()})
-                }
-            } else if gameData.gameOver {
-                ZStack {
-                    Color.black.opacity(0.5).ignoresSafeArea()
-                    GameStopBoardView(gameStopState: .lose, firstBtnTapped: {
-                        gameData.restartGame = true
-                        countdown = 3
-                        startCountdown()
-                        
-                    }, secondBtnTapped: {presentationMode.wrappedValue.dismiss()})
-                }
-            }
-            
-            if isPause {
-                ZStack {
-                    Color.black.opacity(0.5).ignoresSafeArea()
-                    GameStopBoardView(gameStopState: .pause, firstBtnTapped: {
-                        isPause = false
-                        gameData.gamePause = false
-                        
-                    }, secondBtnTapped: {presentationMode.wrappedValue.dismiss()})
-                }
-            }
-            
             switch countdown {
             case 3:
                 ZStack {
@@ -180,6 +148,40 @@ struct FLTournamentView: View {
             default:
                 Text("")
             }
+            
+            if gameData.gameWon && gameData.gameOver {
+                ZStack {
+                    Color.black.opacity(0.5).ignoresSafeArea()
+                    GameStopBoardView(gameStopState: .win, firstBtnTapped: {
+                        gameData.restartGame = true
+                        countdown = 3
+                        startCountdown()
+                    }, secondBtnTapped: {presentationMode.wrappedValue.dismiss()})
+                }
+            } else if gameData.gameOver {
+                ZStack {
+                    Color.black.opacity(0.5).ignoresSafeArea()
+                    GameStopBoardView(gameStopState: .lose, firstBtnTapped: {
+                        gameData.restartGame = true
+                        countdown = 3
+                        startCountdown()
+                        
+                    }, secondBtnTapped: {presentationMode.wrappedValue.dismiss()})
+                }
+            }
+            
+            if isPause {
+                ZStack {
+                    Color.black.opacity(0.5).ignoresSafeArea()
+                    GameStopBoardView(gameStopState: .pause, firstBtnTapped: {
+                        isPause = false
+                        gameData.gamePause = false
+                        
+                    }, secondBtnTapped: {presentationMode.wrappedValue.dismiss()})
+                }
+            }
+            
+            
             
         }.onAppear {
             scene = FLTournamentScene(size: UIScreen.main.bounds.size)
