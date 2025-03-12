@@ -2,7 +2,7 @@ import SwiftUI
 
 class FLUser: ObservableObject {
     static let shared = FLUser()
-    
+    @Published var openTournament = false
     @AppStorage("coins") var storedCoins: Int = 10
     @Published var coins: Int = 10
     

@@ -8,7 +8,7 @@
 
 import SwiftUI
 
-struct FirstView: View {
+struct FLFirstView: View {
     @State private var isLoading = true
     @State var toUp: Bool = true
     @AppStorage("vers") var verse: Int = 0
@@ -22,12 +22,12 @@ struct FirstView: View {
             } else {
                 VStack {
                     if isLoading {
-                        SplashView()
+                        FLLoaderView()
                             .onAppear {
                                 startTimer()
                             }
                     } else {
-                        MainView()
+                        FLMainMenuView()
                             .onAppear {
                                 AppDelegate.orientationLock = .landscape
                                 setOrientation(.landscapeRight)
@@ -87,5 +87,5 @@ struct FirstView: View {
 }
 
 #Preview {
-    FirstView()
+    FLFirstView()
 }

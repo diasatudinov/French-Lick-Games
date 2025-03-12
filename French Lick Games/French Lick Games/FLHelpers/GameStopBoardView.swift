@@ -14,6 +14,7 @@ struct GameStopBoardView: View {
     @State var gameStopState: GameStopState
     var firstBtnTapped: () -> ()
     var secondBtnTapped: () -> ()
+    @State var raceState: RaceState = .training
     var body: some View {
         ZStack {
             Image(.boardBgFL)
@@ -60,11 +61,24 @@ struct GameStopBoardView: View {
                             Image(.btnBgFL)
                                 .resizable()
                                 .scaledToFit()
-                            Text(gameStopState == .pause ? "Resume" : "Retry")
-                                .font(.system(size: 20, weight: .black))
-                                .foregroundStyle(.milk)
-                                .textCase(.uppercase)
-                            
+                            VStack(spacing: -5) {
+                                Text(gameStopState == .pause ? "Resume" : "Retry")
+                                    .font(.system(size: 20, weight: .black))
+                                    .foregroundStyle(.milk)
+                                    .textCase(.uppercase)
+                                if raceState == .tournament && gameStopState != .pause {
+                                    HStack(spacing: 2) {
+                                        Image(.coinIconFL)
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(height: 10)
+                                        TextWithBorder(text: "100", font:  .custom(FLFonts.regular.rawValue, size: 10), textColor: .milk, borderColor: .black, borderWidth: 1)
+                                            .textCase(.uppercase)
+                                        
+                                        
+                                    }
+                                }
+                            }
                             
                         }.frame(height: 52)
                     }
@@ -94,5 +108,5 @@ struct GameStopBoardView: View {
 }
 
 #Preview {
-    GameStopBoardView(gameStopState: .win, firstBtnTapped: {}, secondBtnTapped: {})
+    GameStopBoardView(gameStopState: .lose, firstBtnTapped: {}, secondBtnTapped: {}, raceState: .tournament)
 }

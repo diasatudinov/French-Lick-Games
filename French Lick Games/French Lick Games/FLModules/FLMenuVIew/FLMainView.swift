@@ -7,8 +7,7 @@ struct FLMainMenuView: View {
     @State private var showUpgrade = false
     
     @StateObject var upgradesVM = FLUpgradesViewModel()
-    //    @StateObject var settingsVM = FCSettingsViewModel()
-    //    @StateObject var shopVM = FCShopViewModel()
+
     var body: some View {
         GeometryReader { geometry in
             VStack(spacing: 0) {
@@ -22,11 +21,10 @@ struct FLMainMenuView: View {
                                 HStack {
                                     Spacer()
                                     Button {
-                                        //                                            if user.coins >= 100 {
-                                        //                                                
-                                        //                                                user.minusUserCoins(for: 100)
-                                        //                                            }
-                                        showTournament = true
+                                        if user.coins >= 100 {              user.minusUserCoins(for: 100)
+                                            user.openTournament = true
+                                        }
+                                        
                                     } label: {
                                         Image(user.coins < 100 ? .tournamentBtnOffFL: .tournamentBtnFL)
                                             .resizable()
@@ -84,11 +82,11 @@ struct FLMainMenuView: View {
                         .scaledToFill()
                     
                 )
-                .fullScreenCover(isPresented: $showTournament) {
-                    FLSelectTheHorseView(viewModel: upgradesVM)
+                .fullScreenCover(isPresented: $user.openTournament) {
+                    FLSelectTheHorseView(viewModel: upgradesVM, raceState: .tournament)
                 }
                 .fullScreenCover(isPresented: $showTraining) {
-                    RunnerGameContainerView()
+                    FLSelectTheHorseView(viewModel: upgradesVM, raceState: .training)
                 }
                 .fullScreenCover(isPresented: $showUpgrade) {
                     FLUpgradesView(viewModel: upgradesVM)
