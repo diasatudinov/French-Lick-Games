@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "type2_horse4.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
