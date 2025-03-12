@@ -32,6 +32,7 @@ class TrainingRunnerGameScene: SKScene {
     var lastUpdateTime: TimeInterval = 0
     
     var stamina: CGFloat = 100.0
+    var upgradesVM: FLUpgradesViewModel?
     var gameData: GameData? {
         didSet {
             // When gameData is assigned, set its onRestart closure
@@ -115,9 +116,9 @@ class TrainingRunnerGameScene: SKScene {
            addChild(startLine)
         
        
-        
+        guard var upgradesVM = upgradesVM, var currentHorse = upgradesVM.currentHorse  else { return }
         // Create the horse sprite
-        horse = SKSpriteNode(texture: SKTexture(imageNamed: "horse1"))
+        horse = SKSpriteNode(texture: SKTexture(imageNamed: "\(currentHorse.type)_horse1"))
         horse.size = CGSize(width: 130, height: 85)
         horse.position = CGPoint(x: startLineX - 50, y: lanePositions[currentLane])
         horse.zPosition = 5
@@ -127,7 +128,7 @@ class TrainingRunnerGameScene: SKScene {
         
         
         for i in 2...13 {
-            let textureName = "horse\(i)"  // Make sure your images are named "horse1", "horse2", etc.
+            let textureName = "\(currentHorse.type)_horse\(i)"
             
             let texture = SKTexture(imageNamed: textureName)
             runningTextures.append(texture)
@@ -357,9 +358,9 @@ class TrainingRunnerGameScene: SKScene {
     func startJump() {
         isJumping = true
         let jumpHeight: CGFloat = 70
-        let jumpUp = SKAction.moveBy(x: 20, y: jumpHeight, duration: 0.3)
+        let jumpUp = SKAction.moveBy(x: 5, y: jumpHeight, duration: 0.3)
         jumpUp.timingMode = .easeOut
-        let jumpDown = SKAction.moveBy(x: 20, y: -jumpHeight, duration: 0.3)
+        let jumpDown = SKAction.moveBy(x: 5, y: -jumpHeight, duration: 0.3)
         jumpDown.timingMode = .easeIn
         let sequence = SKAction.sequence([jumpUp, jumpDown])
         horse.run(sequence) { [weak self] in
@@ -377,7 +378,8 @@ class TrainingRunnerGameScene: SKScene {
             print("view = self.view")
             let newScene = TrainingRunnerGameScene(size: self.size)
             newScene.scaleMode = self.scaleMode
-            newScene.gameData = self.gameData // pass along the same GameData instance
+            newScene.gameData = self.gameData
+            newScene.upgradesVM = self.upgradesVM
             view.presentScene(newScene, transition: SKTransition.fade(withDuration: 0.5))
         }
     }
@@ -394,5 +396,5 @@ class TrainingRunnerGameScene: SKScene {
 
 
 #Preview {
-    RunnerGameContainerView()
+    RunnerGameContainerView(upgradeVM: FLUpgradesViewModel())
 }

@@ -5,6 +5,7 @@ struct RunnerGameContainerView: View {
     @StateObject var user = FLUser.shared
     @Environment(\.presentationMode) var presentationMode
     @StateObject var gameData = GameData()
+    @ObservedObject var upgradeVM: FLUpgradesViewModel
     @State var scene: SKScene = TrainingRunnerGameScene(size: UIScreen.main.bounds.size)
 
     @State private var isPause = false
@@ -182,6 +183,7 @@ struct RunnerGameContainerView: View {
             scene.scaleMode = .resizeFill
             if let trainingScene = scene as? TrainingRunnerGameScene {
                 trainingScene.gameData = gameData
+                trainingScene.upgradesVM = upgradeVM
             }
                 
             startCountdown()
@@ -209,6 +211,6 @@ struct RunnerGameContainerView: View {
 
 struct RunnerGameContainerView_Previews: PreviewProvider {
     static var previews: some View {
-        RunnerGameContainerView()
+        RunnerGameContainerView(upgradeVM: FLUpgradesViewModel())
     }
 }
