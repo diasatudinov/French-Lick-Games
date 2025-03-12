@@ -1,10 +1,3 @@
-//
-//  GameTiurnamentData.swift
-//  French Lick Games
-//
-//  Created by Dias Atudinov on 11.03.2025.
-//
-
 import SwiftUI
 
 class GameTiurnamentData: ObservableObject {
