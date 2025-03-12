@@ -7,10 +7,17 @@
 
 import SwiftUI
 
+enum RaceState {
+    case tournament, training
+}
+
 struct FLSelectTheHorseView: View {
     @Environment(\.presentationMode) var presentationMode
     @StateObject var user = FLUser.shared
     @ObservedObject var viewModel: FLUpgradesViewModel
+    @State var raceState: RaceState
+    @State private var showTournament = false
+    @State private var showTraining = false
     var body: some View {
         ZStack {
             
@@ -101,6 +108,13 @@ struct FLSelectTheHorseView: View {
                 .scaledToFill()
             
         )
+        .fullScreenCover(isPresented: $showTournament) {
+            FLTournamentView(upgradeVM: viewModel)
+        }
+        .fullScreenCover(isPresented: $showTraining) {
+            RunnerGameContainerView(upgradeVM: viewModel)
+        }
+        
     }
     
     @ViewBuilder func horseCell(horse: Horse) -> some View {
@@ -157,7 +171,12 @@ struct FLSelectTheHorseView: View {
             }.frame(width: 220)
             
             Button {
-                print("Select")
+                    viewModel.currentHorse = horse
+                if raceState == .tournament {
+                    showTournament = true
+                } else if raceState == .training {
+                    showTraining = true
+                }
             } label: {
                 ZStack {
                     Image(.btnBgFL)
@@ -176,5 +195,5 @@ struct FLSelectTheHorseView: View {
 }
 
 #Preview {
-    FLSelectTheHorseView(viewModel: FLUpgradesViewModel())
+    FLSelectTheHorseView(viewModel: FLUpgradesViewModel(), raceState: .training)
 }

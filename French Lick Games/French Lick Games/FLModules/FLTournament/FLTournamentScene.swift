@@ -16,6 +16,7 @@ class FLTournamentScene: SKScene {
     var lastUpdateTime: TimeInterval = 0
     
     var stamina: CGFloat = 100.0
+    var upgradesVM: FLUpgradesViewModel?
     var gameData: GameTiurnamentData? {
         didSet {
             // When gameData is assigned, set its onRestart closure
@@ -100,9 +101,10 @@ class FLTournamentScene: SKScene {
            addChild(startLine)
         
        
-        
+        guard var upgradesVM = upgradesVM, var currentHorse = upgradesVM.currentHorse  else { return }
         // Create the horse sprite
-        horse = SKSpriteNode(texture: SKTexture(imageNamed: "horse1"))
+        
+        horse = SKSpriteNode(texture: SKTexture(imageNamed: "\(currentHorse.type)_horse1"))
         horse.size = CGSize(width: 130, height: 85)
         horse.position = CGPoint(x: startLineX - 50, y: lanePositions[currentLane])
         horse.zPosition = 5
@@ -110,37 +112,54 @@ class FLTournamentScene: SKScene {
         
         
         // Create opponent horse 1 – placed in the top lane and slightly behind the player's horse.
-                let opponent1 = SKSpriteNode(color: .blue, size: CGSize(width: 60, height: 60))
-                opponent1.position = CGPoint(x: startLineX - 50, y: lanePositions[0])
-                addChild(opponent1)
-                opponentHorses.append(opponent1)
-                
-                // Create opponent horse 2 – placed in the bottom lane and even further behind.
-                let opponent2 = SKSpriteNode(color: .purple, size: CGSize(width: 60, height: 60))
-                opponent2.position = CGPoint(x: startLineX - 100, y: lanePositions[2])
-                addChild(opponent2)
-                opponentHorses.append(opponent2)
+        let opponent1 = SKSpriteNode(texture: SKTexture(imageNamed: "type3_horse1"))
+        opponent1.size = CGSize(width: 130, height: 85)
+        opponent1.position = CGPoint(x: startLineX - 50, y: lanePositions[0])
+        opponent1.zPosition = 5
+        addChild(opponent1)
+        opponentHorses.append(opponent1)
         
+        // Create opponent horse 2 – placed in the bottom lane and even further behind.
+        let opponent2 = SKSpriteNode(texture: SKTexture(imageNamed: "type2_horse1"))
+        opponent2.size = CGSize(width: 130, height: 85)
+        opponent2.position = CGPoint(x: startLineX - 100, y: lanePositions[2])
+        opponent2.zPosition = 5
+        addChild(opponent2)
+        opponentHorses.append(opponent2)
         
         var runningTextures: [SKTexture] = []
-        
+        var runningTextures1: [SKTexture] = []
+        var runningTextures2: [SKTexture] = []
         
         for i in 2...13 {
-            let textureName = "horse\(i)"  // Make sure your images are named "horse1", "horse2", etc.
+            let textureName = "\(currentHorse.type)_horse\(i)"  // Make sure your images are named "horse1", "horse2", etc.
+            let textureName1 = "type3_horse\(i)"
+            let textureName2 = "type2_horse\(i)"
             
             let texture = SKTexture(imageNamed: textureName)
+            let texture1 = SKTexture(imageNamed: textureName1)
+            let texture2 = SKTexture(imageNamed: textureName2)
+            
             runningTextures.append(texture)
+            runningTextures1.append(texture1)
+            runningTextures2.append(texture2)
             
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
             // Create an animation action that cycles through the textures:
             let runningAnimation = SKAction.animate(with: runningTextures, timePerFrame: 0.07)
+            let runningAnimation1 = SKAction.animate(with: runningTextures1, timePerFrame: 0.07)
+            let runningAnimation2 = SKAction.animate(with: runningTextures2, timePerFrame: 0.07)
             // Repeat the animation forever:
             let runningLoop = SKAction.repeatForever(runningAnimation)
+            let runningLoop1 = SKAction.repeatForever(runningAnimation1)
+            let runningLoop2 = SKAction.repeatForever(runningAnimation2)
             // Run the animation on the horse node:
             
             self.horse.run(runningLoop)
+            opponent1.run(runningLoop1)
+            opponent2.run(runningLoop2)
         }
         
         lastUpdateTime = 0
@@ -382,6 +401,7 @@ class FLTournamentScene: SKScene {
             let newScene = FLTournamentScene(size: self.size)
             newScene.scaleMode = self.scaleMode
             newScene.gameData = self.gameData // pass along the same GameData instance
+            newScene.upgradesVM = self.upgradesVM
             view.presentScene(newScene, transition: SKTransition.fade(withDuration: 0.5))
         }
     }

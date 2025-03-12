@@ -9,8 +9,10 @@ import SwiftUI
 import SpriteKit
 
 struct FLTournamentView: View {
+    @StateObject var user = FLUser.shared
     @Environment(\.presentationMode) var presentationMode
     @StateObject var gameData = GameTiurnamentData()
+    @ObservedObject var upgradeVM: FLUpgradesViewModel
     @State var scene: SKScene = FLTournamentScene(size: UIScreen.main.bounds.size)
 
     @State private var isPause = false
@@ -153,20 +155,31 @@ struct FLTournamentView: View {
                 ZStack {
                     Color.black.opacity(0.5).ignoresSafeArea()
                     GameStopBoardView(gameStopState: .win, firstBtnTapped: {
-                        gameData.restartGame = true
-                        countdown = 3
-                        startCountdown()
-                    }, secondBtnTapped: {presentationMode.wrappedValue.dismiss()})
+                        if user.coins >= 100 {
+                            user.minusUserCoins(for: 100)
+                            gameData.restartGame = true
+                            countdown = 3
+                            startCountdown()
+                        }
+                    }, secondBtnTapped: {
+                        user.openTournament = false
+                        //presentationMode.wrappedValue.dismiss()
+                    }, raceState: .tournament)
                 }
             } else if gameData.gameOver {
                 ZStack {
                     Color.black.opacity(0.5).ignoresSafeArea()
                     GameStopBoardView(gameStopState: .lose, firstBtnTapped: {
-                        gameData.restartGame = true
-                        countdown = 3
-                        startCountdown()
-                        
-                    }, secondBtnTapped: {presentationMode.wrappedValue.dismiss()})
+                        if user.coins >= 100 {
+                            user.minusUserCoins(for: 100)
+                            gameData.restartGame = true
+                            countdown = 3
+                            startCountdown()
+                        }
+                    }, secondBtnTapped: {
+                        user.openTournament = false
+                        //presentationMode.wrappedValue.dismiss()
+                    }, raceState: .tournament)
                 }
             }
             
@@ -177,7 +190,10 @@ struct FLTournamentView: View {
                         isPause = false
                         gameData.gamePause = false
                         
-                    }, secondBtnTapped: {presentationMode.wrappedValue.dismiss()})
+                    }, secondBtnTapped: {
+                        user.openTournament = false
+                       // presentationMode.wrappedValue.dismiss()
+                    })
                 }
             }
             
@@ -188,6 +204,7 @@ struct FLTournamentView: View {
             scene.scaleMode = .resizeFill
             if let trainingScene = scene as? FLTournamentScene {
                 trainingScene.gameData = gameData
+                trainingScene.upgradesVM = upgradeVM
             }
                 
             startCountdown()
@@ -210,5 +227,5 @@ struct FLTournamentView: View {
 
 
 #Preview {
-    FLTournamentView()
+    FLTournamentView(upgradeVM: FLUpgradesViewModel())
 }
